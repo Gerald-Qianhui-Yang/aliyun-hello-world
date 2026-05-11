@@ -9,9 +9,9 @@ locals {
 # --- Security Group ---
 
 resource "alicloud_security_group" "sae" {
-  name   = "${var.project}-${var.env}-sae-sg"
-  vpc_id = var.vpc_id
-  tags   = local.tags
+  security_group_name = "${var.project}-${var.env}-sae-sg"
+  vpc_id              = var.vpc_id
+  tags                = local.tags
 }
 
 resource "alicloud_security_group_rule" "allow_http" {
@@ -44,8 +44,8 @@ resource "alicloud_rds_account" "master" {
 }
 
 resource "alicloud_db_database" "app" {
-  instance_id = alicloud_db_instance.pg.id
-  name        = "${replace(var.project, "-", "")}_${var.env}"
+  instance_id    = alicloud_db_instance.pg.id
+  data_base_name = "${replace(var.project, "-", "")}_${var.env}"
 }
 
 # --- SAE ---
@@ -71,7 +71,7 @@ resource "alicloud_sae_application" "app" {
   envs = jsonencode([
     {
       name  = "DATABASE_URL"
-      value = "postgresql://${alicloud_rds_account.master.account_name}:${var.db_password}@${alicloud_db_instance.pg.connection_string}:${alicloud_db_instance.pg.port}/${alicloud_db_database.app.name}"
+      value = "postgresql://${alicloud_rds_account.master.account_name}:${var.db_password}@${alicloud_db_instance.pg.connection_string}:${alicloud_db_instance.pg.port}/${alicloud_db_database.app.data_base_name}"
     },
     {
       name  = "PORT"
