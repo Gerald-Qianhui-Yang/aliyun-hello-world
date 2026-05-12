@@ -35,9 +35,50 @@ jobs:
           echo "image_url=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Login to ACR Enterprise Edition (VPC)
+        env:
+          ALICLOUD_ACCESS_KEY: ${{ secrets.ALICLOUD_ACCESS_KEY }}
+          ALICLOUD_SECRET_KEY: ${{ secrets.ALICLOUD_SECRET_KEY }}
+          ALICLOUD_SECURITY_TOKEN: ${{ secrets.ALICLOUD_SECURITY_TOKEN }}
         run: |
-          echo "${{ secrets.ACR_EE_PASSWORD }}" | docker login \
-            --username "${{ secrets.ACR_EE_USERNAME }}" \
+          # Get temporary credentials via GetAuthorizationToken API
+          TOKEN_JSON=$(python3 - <<'PYEOF'
+          import os, hmac, hashlib, base64, time, json, urllib.request, urllib.parse
+          from datetime import datetime, timezone
+
+          ak = os.environ["ALICLOUD_ACCESS_KEY"]
+          sk = os.environ["ALICLOUD_SECRET_KEY"]
+          st = os.environ.get("ALICLOUD_SECURITY_TOKEN", "")
+          instance_id = "cri-kex0e6y319lsjt27"
+
+          params = {
+              "Action": "GetAuthorizationToken",
+              "Version": "2018-12-01",
+              "Format": "JSON",
+              "AccessKeyId": ak,
+              "SignatureMethod": "HMAC-SHA1",
+              "Timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "SignatureVersion": "1.0",
+              "SignatureNonce": str(int(time.time() * 1000)),
+              "InstanceId": instance_id,
+          }
+          if st:
+              params["SecurityToken"] = st
+
+          sorted_params = sorted(params.items())
+          query = urllib.parse.urlencode(sorted_params)
+          string_to_sign = "GET&%2F&" + urllib.parse.quote(query, safe="")
+          h = hmac.new((sk + "&").encode(), string_to_sign.encode(), hashlib.sha1)
+          params["Signature"] = base64.b64encode(h.digest()).decode()
+
+          url = "https://cr.cn-shanghai.aliyuncs.com/?" + urllib.parse.urlencode(params)
+          resp = urllib.request.urlopen(url, timeout=30)
+          print(resp.read().decode())
+          PYEOF
+          )
+          ACR_USER=$(echo "$TOKEN_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['TempUsername'])")
+          ACR_PASS=$(echo "$TOKEN_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['AuthorizationToken'])")
+          echo "$ACR_PASS" | docker login \
+            --username "$ACR_USER" \
             --password-stdin \
             "${{ env.ACR_EE_REGISTRY_VPC }}"
 
