@@ -68,7 +68,7 @@ variable "sae_replicas" {
 variable "rds_instance_type" {
   description = "RDS instance class"
   type        = string
-  default     = "pg.n2.small.2c"
+  default     = "pg.n2.2c.1m"
 }
 
 variable "rds_storage_size" {
