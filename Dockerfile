@@ -1,9 +1,9 @@
-FROM python:3.11-slim
+FROM lly-nw-cafe-d-acr-01-registry-vpc.cn-shanghai.cr.aliyuncs.com/myapp-dev/python:3.11-slim
 
 WORKDIR /app
 
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 
 COPY app/ .
 
