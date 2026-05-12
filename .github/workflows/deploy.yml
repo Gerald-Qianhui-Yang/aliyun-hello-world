@@ -23,6 +23,7 @@ env:
 jobs:
   build:
     runs-on: [self-hosted, linux, aliyun]
+    environment: ${{ inputs.environment || 'dev' }}
     outputs:
       image_url: ${{ steps.meta.outputs.image_url }}
     steps:
