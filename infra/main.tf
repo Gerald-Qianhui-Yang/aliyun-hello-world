@@ -61,6 +61,7 @@ resource "alicloud_sae_application" "app" {
   namespace_id      = alicloud_sae_namespace.main.namespace_id
   package_type      = "Image"
   image_url         = var.image_url
+  acr_instance_id   = var.acr_instance_id
   cpu               = var.sae_cpu
   memory            = var.sae_memory
   replicas          = var.sae_replicas

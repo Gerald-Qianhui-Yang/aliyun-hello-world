@@ -76,3 +76,9 @@ variable "rds_storage_size" {
   type        = number
   default     = 20
 }
+
+variable "acr_instance_id" {
+  description = "ACR EE instance ID"
+  type        = string
+  default     = "cri-kex0e6y319lsjt27"
+}
